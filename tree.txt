@@ -1,0 +1,353 @@
+﻿|-- app
+|   |-- api
+|   |   |-- cleansing-recipes
+|   |   |   |-- unlock
+|   |   |   |   |-- route.ts
+|   |   |   |-- route.ts
+|   |   |-- essence
+|   |   |   |-- dev-grant
+|   |   |   |   |-- route.ts
+|   |   |   |-- packages
+|   |   |   |   |-- route.ts
+|   |   |   |-- spend
+|   |   |   |   |-- route.ts
+|   |   |   |-- visitor
+|   |   |   |   |-- route.ts
+|   |   |   |-- wallet
+|   |   |   |   |-- route.ts
+|   |   |-- fortune-cookie
+|   |   |   |-- generate
+|   |   |   |   |-- route.ts
+|   |   |-- tarot
+|   |   |   |-- generate-reading
+|   |   |   |   |-- route.ts
+|   |-- auth
+|   |-- generated
+|   |   |-- prisma
+|   |   |   |-- internal
+|   |   |   |   |-- class.ts
+|   |   |   |   |-- prismaNamespace.ts
+|   |   |   |   |-- prismaNamespaceBrowser.ts
+|   |   |   |-- models
+|   |   |   |   |-- CleansingRecipe.ts
+|   |   |   |   |-- CleansingRecipeUnlock.ts
+|   |   |   |   |-- DeckCard.ts
+|   |   |   |   |-- Entitlement.ts
+|   |   |   |   |-- EssencePackage.ts
+|   |   |   |   |-- EssenceTransaction.ts
+|   |   |   |   |-- EssenceWallet.ts
+|   |   |   |   |-- FeatureFlag.ts
+|   |   |   |   |-- Product.ts
+|   |   |   |   |-- Purchase.ts
+|   |   |   |   |-- Subscription.ts
+|   |   |   |   |-- TarotCard.ts
+|   |   |   |   |-- TarotDeck.ts
+|   |   |   |   |-- TarotReading.ts
+|   |   |   |   |-- TarotReadingCard.ts
+|   |   |   |   |-- User.ts
+|   |   |   |   |-- UserEntitlement.ts
+|   |   |   |   |-- VisitorSession.ts
+|   |   |   |-- browser.ts
+|   |   |   |-- client.ts
+|   |   |   |-- commonInputTypes.ts
+|   |   |   |-- enums.ts
+|   |   |   |-- models.ts
+|   |-- history
+|   |-- reading
+|   |   |-- result
+|   |   |-- page.tsx
+|   |-- room
+|   |   |-- page.tsx
+|   |-- favicon.ico
+|   |-- globals.css
+|   |-- layout.tsx
+|   |-- page.tsx
+|-- components
+|   |-- experience
+|   |   |-- ImmersiveIntro.tsx
+|   |-- layout
+|   |-- shared
+|   |-- ui
+|-- data
+|   |-- feature-flags.seed.ts
+|   |-- tarot.seed.ts
+|-- features
+|   |-- cleansing
+|   |   |-- components
+|   |   |   |-- book
+|   |   |   |   |-- BookCategoryList.tsx
+|   |   |   |   |-- BookFooter.tsx
+|   |   |   |   |-- BookHeader.tsx
+|   |   |   |   |-- BookPage.tsx
+|   |   |   |   |-- BookSection.tsx
+|   |   |   |   |-- BookStage.tsx
+|   |   |   |   |-- CleansingBook.tsx
+|   |   |   |   |-- RecipeBadge.tsx
+|   |   |   |   |-- RecipeMetadata.tsx
+|   |   |   |-- CleansingBookExperience.tsx
+|   |   |-- hooks
+|   |   |   |-- useCleansingRecipes.ts
+|   |-- essence
+|   |   |-- client
+|   |   |   |-- anonymousId.ts
+|   |   |-- components
+|   |   |   |-- EssenceBalancePill.tsx
+|   |   |   |-- EssenceEmptyModal.tsx
+|   |   |   |-- EssenceProvider.tsx
+|   |   |   |-- EssenceShopModal.tsx
+|   |   |-- core
+|   |   |   |-- essencePricing.ts
+|   |   |   |-- essenceService.ts
+|   |   |-- hooks
+|   |   |   |-- useEssencePackages.ts
+|   |   |   |-- useEssenceWallet.ts
+|   |-- fortune-cookie
+|   |   |-- components
+|   |   |   |-- FortuneCookieExperience.tsx
+|   |   |   |-- FortuneCookieMessage.tsx
+|   |   |   |-- FortuneCookieModal.tsx
+|   |   |-- core
+|   |   |   |-- fortuneCookieEngine.ts
+|   |   |-- hooks
+|   |   |   |-- useGenerateFortuneCookie.ts
+|   |   |-- prompts
+|   |   |   |-- fortuneCookieSystemPrompt.ts
+|   |   |-- types
+|   |   |   |-- fortuneCookie.types.ts
+|   |-- grimoire
+|   |   |-- components
+|   |   |-- lib
+|   |-- mystic-engine
+|   |   |-- core
+|   |   |   |-- mystic.types.ts
+|   |   |   |-- readingEngine.ts
+|   |   |-- experience
+|   |   |   |-- experience.types.ts
+|   |   |   |-- experienceEngine.ts
+|   |   |-- narrative
+|   |   |   |-- narrativeEngine.ts
+|   |   |-- providers
+|   |   |   |-- mysticProvider.types.ts
+|   |   |-- index.ts
+|   |-- mystic-room
+|   |   |-- components
+|   |   |   |-- AmbientAudioControls.tsx
+|   |   |   |-- AmbientMediaLayer.tsx
+|   |   |   |-- CandleGlow.tsx
+|   |   |   |-- MysticObjectTray.tsx
+|   |   |   |-- MysticRoom.tsx
+|   |   |   |-- MysticTable.tsx
+|   |   |   |-- RainLayer.tsx
+|   |   |   |-- ReadingDraftBadge.tsx
+|   |   |   |-- ReadingInfoModal.tsx
+|   |   |   |-- RoomAwakening.tsx
+|   |   |   |-- SmokeLayer.tsx
+|   |   |-- director
+|   |   |   |-- RoomDirector.tsx
+|   |   |-- hooks
+|   |   |-- lib
+|   |   |   |-- roomPresets.ts
+|   |   |-- types
+|   |   |   |-- room.types.ts
+|   |-- profile
+|   |-- rituals
+|   |-- runes
+|   |-- tarot
+|   |   |-- components
+|   |   |   |-- ReadingEntry.tsx
+|   |   |   |-- SelectableTarotCards.tsx
+|   |   |   |-- TarotCardFocusModal.tsx
+|   |   |   |-- TarotCardReadingMessage.tsx
+|   |   |   |-- TarotReadingExportCard.tsx
+|   |   |   |-- TarotReadingLoader.tsx
+|   |   |   |-- TarotReadingModal.tsx
+|   |   |   |-- TarotShuffleAnimation.tsx
+|   |   |-- core
+|   |   |   |-- tarot.types.ts
+|   |   |   |-- tarotConstants.ts
+|   |   |   |-- tarotDeck.ts
+|   |   |   |-- tarotEngine.ts
+|   |   |   |-- tarotReadingEngine.ts
+|   |   |-- data
+|   |   |-- engine
+|   |   |   |-- tarotInterpretation.ts
+|   |   |-- hooks
+|   |   |   |-- useGenerateTarotReading.ts
+|   |   |-- knowledge
+|   |   |   |-- tarotCardMeanings.ts
+|   |   |   |-- tarotKnowledge.types.ts
+|   |   |-- lib
+|   |   |   |-- generateReading.ts
+|   |   |   |-- readingRules.ts
+|   |   |   |-- shuffleDeck.ts
+|   |   |-- prompts
+|   |   |   |-- readingSystemPrompt.ts
+|   |   |-- providers
+|   |   |   |-- tarotProvider.ts
+|   |   |-- types
+|   |   |   |-- tarot.types.ts
+|   |   |-- utils
+|   |   |   |-- normalizeTarotSlug.ts
+|-- hooks
+|-- lib
+|   |-- audio
+|   |   |-- ambientAudioManager.ts
+|   |-- auth
+|   |-- entitlements
+|   |-- payments
+|   |-- prisma
+|   |   |-- prisma.ts
+|-- prisma
+|   |-- migrations
+|   |   |-- 20260627193150_init
+|   |   |   |-- migration.sql
+|   |   |-- 20260630044924_add_visitor_session_and_essence_wallet
+|   |   |   |-- migration.sql
+|   |   |-- 20260630220230_add_essence_packages
+|   |   |   |-- migration.sql
+|   |   |-- 20260702160810_add_vital_and_eternal_essences
+|   |   |   |-- migration.sql
+|   |   |-- 20260702205028_add_cleansing_recipes
+|   |   |   |-- migration.sql
+|   |   |-- 20260703042449_enrich_cleansing_recipes
+|   |   |   |-- migration.sql
+|   |   |-- 20260703061421_add_cleansing_recipe_unlocks
+|   |   |   |-- migration.sql
+|   |   |-- migration_lock.toml
+|   |-- schema.prisma
+|   |-- seed.ts
+|   |-- seedCleansingRecipes.ts
+|   |-- seedEssencePackages.ts
+|-- public
+|   |-- audio
+|   |   |-- fire-crackle.mp3
+|   |   |-- rain-soft.mp3
+|   |-- cards
+|   |   |-- tarot
+|   |   |   |-- as_de_bastos.png
+|   |   |   |-- as_de_copas.png
+|   |   |   |-- as_de_espadas.png
+|   |   |   |-- as_de_pentaculos.png
+|   |   |   |-- caballero_de_bastos.png
+|   |   |   |-- caballero_de_copas.png
+|   |   |   |-- caballero_de_espadas.png
+|   |   |   |-- caballero_de_pentaculos.png
+|   |   |   |-- cinco_de_bastos.png
+|   |   |   |-- cinco_de_copas.png
+|   |   |   |-- cinco_de_espadas.png
+|   |   |   |-- cinco_de_pentaculos.png
+|   |   |   |-- cuatro_de_bastos.png
+|   |   |   |-- cuatro_de_copas.png
+|   |   |   |-- cuatro_de_espadas.png
+|   |   |   |-- cuatro_de_pentaculos.png
+|   |   |   |-- diez_de_bastos.png
+|   |   |   |-- diez_de_copas.png
+|   |   |   |-- diez_de_espadas.png
+|   |   |   |-- diez_de_pentaculos.png
+|   |   |   |-- dos_de_bastos.png
+|   |   |   |-- dos_de_copas.png
+|   |   |   |-- dos_de_espadas.png
+|   |   |   |-- dos_de_pentaculos.png
+|   |   |   |-- el_carro.png
+|   |   |   |-- el_colgado.png
+|   |   |   |-- el_diablo.png
+|   |   |   |-- el_emperador.png
+|   |   |   |-- el_ermitano.png
+|   |   |   |-- el_hierofante.png
+|   |   |   |-- el_juicio.png
+|   |   |   |-- el_loco.png
+|   |   |   |-- el_mago.png
+|   |   |   |-- el_mundo.png
+|   |   |   |-- el_sol.png
+|   |   |   |-- la_emperatriz.png
+|   |   |   |-- la_estrella.png
+|   |   |   |-- la_fuerza.png
+|   |   |   |-- la_justicia.png
+|   |   |   |-- la_luna.png
+|   |   |   |-- la_muerte.png
+|   |   |   |-- la_ruedadelafortuna.png
+|   |   |   |-- la_sacerdotisa.png
+|   |   |   |-- la_templanza.png
+|   |   |   |-- la_torre.png
+|   |   |   |-- los_enamorados.png
+|   |   |   |-- nueve_de_bastos.png
+|   |   |   |-- nueve_de_copas.png
+|   |   |   |-- nueve_de_espadas.png
+|   |   |   |-- nueve_de_pentaculos.png
+|   |   |   |-- ocho_de_bastos.png
+|   |   |   |-- ocho_de_copas.png
+|   |   |   |-- ocho_de_espadas.png
+|   |   |   |-- ocho_de_pentaculos.png
+|   |   |   |-- reina_de_bastos.png
+|   |   |   |-- reina_de_copas.png
+|   |   |   |-- reina_de_espadas.png
+|   |   |   |-- reina_de_pentaculos.png
+|   |   |   |-- rey_de_bastos.png
+|   |   |   |-- rey_de_copas.png
+|   |   |   |-- rey_de_espadas.png
+|   |   |   |-- rey_de_pentaculos.png
+|   |   |   |-- seis_de_bastos.png
+|   |   |   |-- seis_de_copas.png
+|   |   |   |-- seis_de_espadas.png
+|   |   |   |-- seis_de_pentaculos.png
+|   |   |   |-- siete_de_bastos.png
+|   |   |   |-- siete_de_copas.png
+|   |   |   |-- siete_de_espadas.png
+|   |   |   |-- siete_de_pentaculos.png
+|   |   |   |-- sota_de_bastos.png
+|   |   |   |-- sota_de_copas.png
+|   |   |   |-- sota_de_espadas.png
+|   |   |   |-- sota_de_pentaculos.png
+|   |   |   |-- tres_de_bastos.png
+|   |   |   |-- tres_de_copas.png
+|   |   |   |-- tres_de_espadas.png
+|   |   |   |-- tres_de_pentaculos.png
+|   |-- images
+|   |   |-- cards
+|   |   |-- objects
+|   |   |   |-- cleansing-book-closed-01.png
+|   |   |   |-- fortune-cookie-01-open.png
+|   |   |   |-- fortune-cookie-01.png
+|   |   |   |-- grimoire-01.png
+|   |   |   |-- i-ching-coins-02.png
+|   |   |   |-- ritual-bowl-01.png
+|   |   |   |-- rune-bag-01.png
+|   |   |   |-- tarot-deck-01.png
+|   |   |-- room
+|   |   |-- textures
+|   |   |   |-- ritual-table-wood-01.png
+|   |-- videos
+|   |-- file.svg
+|   |-- globe.svg
+|   |-- next.svg
+|   |-- vercel.svg
+|   |-- window.svg
+|-- scripts
+|   |-- tarot
+|   |   |-- generateTarotKnowledgePrompt.ts
+|-- store
+|   |-- useAudioStore.ts
+|   |-- useReadingStore.ts
+|   |-- useRoomStore.ts
+|-- types
+|   |-- mystic-room.ts
+|   |-- payments.ts
+|   |-- tarot.ts
+|-- .env
+|-- .gitignore
+|-- AGENTS.md
+|-- CLAUDE.md
+|-- eslint.config.mjs
+|-- next-env.d.ts
+|-- next.config.ts
+|-- package-lock.json
+|-- package.json
+|-- pnpm-lock.yaml
+|-- pnpm-workspace.yaml
+|-- postcss.config.mjs
+|-- prisma.config.ts
+|-- project-files.txt
+|-- project-tree.txt
+|-- README.md
+|-- tree.txt
+|-- tsconfig.json

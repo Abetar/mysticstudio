@@ -1,0 +1,396 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String            @id @default(cuid())
+  name            String?
+  email           String?           @unique
+  image           String?
+  birthDate       DateTime?
+  zodiacSign      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  essenceWallet   EssenceWallet?
+  purchases       Purchase[]
+  subscriptions   Subscription[]
+  readings        TarotReading[]
+  entitlements    UserEntitlement[]
+  visitorSessions VisitorSession[]
+}
+
+model VisitorSession {
+  id          String         @id @default(cuid())
+  anonymousId String         @unique
+  userId      String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  lastSeenAt  DateTime       @default(now())
+  wallet      EssenceWallet?
+  user        User?          @relation(fields: [userId], references: [id])
+}
+
+model EssenceWallet {
+  id               String  @id @default(cuid())
+  userId           String? @unique
+  visitorSessionId String? @unique
+
+  balance Int @default(0)
+
+  vitalBalance      Int       @default(0)
+  eternalBalance    Int       @default(0)
+  lastVitalRefillAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions           EssenceTransaction[]
+  cleansingRecipeUnlocks CleansingRecipeUnlock[]
+  essencePurchases       EssencePurchase[]
+
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visitorSession VisitorSession? @relation(fields: [visitorSessionId], references: [id], onDelete: Cascade)
+}
+
+model EssenceTransaction {
+  id          String                 @id @default(cuid())
+  walletId    String
+  amount      Int
+  type        EssenceTransactionType
+  balanceType EssenceBalanceType?
+  reason      String?
+  module      MysticModule?
+  referenceId String?
+  createdAt   DateTime               @default(now())
+
+  wallet EssenceWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([referenceId])
+}
+
+model EssencePackage {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  essences        Int
+  price           Decimal  @db.Decimal(10, 2)
+  currency        String   @default("MXN")
+  badge           String?
+  description     String?
+  isPopular       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  stripeProductId String?
+  stripePriceId   String?
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  purchases EssencePurchase[]
+
+  @@index([stripePriceId])
+}
+
+model EssencePurchase {
+  id String @id @default(cuid())
+
+  walletId  String
+  packageId String
+
+  stripeSessionId       String  @unique
+  stripePaymentIntentId String?
+
+  amountPaid Decimal @db.Decimal(10, 2)
+  currency   String
+
+  essences Int
+
+  status PurchaseStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wallet  EssenceWallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  package EssencePackage @relation(fields: [packageId], references: [id])
+
+  @@index([walletId])
+  @@index([packageId])
+  @@index([stripePaymentIntentId])
+}
+
+model CleansingRecipe {
+  id       String            @id @default(cuid())
+  title    String
+  slug     String            @unique
+  summary  String
+  category CleansingCategory
+
+  difficulty       RecipeDifficulty @default(EASY)
+  estimatedMinutes Int?
+  origin           String?
+  expectedResult   String?
+  repeatEvery      String?
+  tags             String[]         @default([])
+
+  ingredients String[]
+  steps       String[]
+  warnings    String?
+  notes       String?
+
+  isPremium   Boolean @default(false)
+  essenceCost Int     @default(0)
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  unlocks CleansingRecipeUnlock[]
+}
+
+model CleansingRecipeUnlock {
+  id        String   @id @default(cuid())
+  walletId  String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  wallet EssenceWallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  recipe CleansingRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId, recipeId])
+}
+
+model TarotCard {
+  id               String             @id @default(cuid())
+  name             String
+  slug             String             @unique
+  arcana           String
+  suit             String?
+  number           Int?
+  imageUrl         String?
+  generalMeaning   String
+  loveMeaning      String
+  workMeaning      String
+  moneyMeaning     String
+  healthMeaning    String
+  spiritualMeaning String
+  reversedMeaning  String
+  symbolism        String
+  keywords         String[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deckCards        DeckCard[]
+  readingCards     TarotReadingCard[]
+}
+
+model TarotDeck {
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  description   String
+  coverImageUrl String?
+  isDefault     Boolean    @default(false)
+  isPremium     Boolean    @default(false)
+  productId     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  cards         DeckCard[]
+}
+
+model DeckCard {
+  id     String    @id @default(cuid())
+  deckId String
+  cardId String
+  card   TarotCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  deck   TarotDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, cardId])
+}
+
+model TarotReading {
+  id         String             @id @default(cuid())
+  userId     String?
+  guestName  String?
+  birthDate  DateTime?
+  zodiacSign String?
+  topic      ReadingTopic
+  question   String?
+  summary    String?
+  advice     String?
+  deckId     String?
+  createdAt  DateTime           @default(now())
+  user       User?              @relation(fields: [userId], references: [id])
+  cards      TarotReadingCard[]
+}
+
+model TarotReadingCard {
+  id             String          @id @default(cuid())
+  readingId      String
+  cardId         String
+  position       ReadingPosition
+  isReversed     Boolean         @default(false)
+  interpretation String
+  card           TarotCard       @relation(fields: [cardId], references: [id])
+  reading        TarotReading    @relation(fields: [readingId], references: [id], onDelete: Cascade)
+
+  @@unique([readingId, position])
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  name            String
+  slug            String        @unique
+  type            ProductType
+  description     String?
+  stripeProductId String?
+  stripePriceId   String?
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  entitlements    Entitlement[]
+  purchases       Purchase[]
+}
+
+model Purchase {
+  id              String         @id @default(cuid())
+  userId          String
+  productId       String
+  stripeSessionId String?
+  status          PurchaseStatus @default(PENDING)
+  createdAt       DateTime       @default(now())
+  product         Product        @relation(fields: [productId], references: [id])
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               SubscriptionStatus @default(FREE)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Entitlement {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  name        String
+  description String?
+  productId   String?
+  product     Product?          @relation(fields: [productId], references: [id])
+  users       UserEntitlement[]
+}
+
+model UserEntitlement {
+  id            String            @id @default(cuid())
+  userId        String
+  entitlementId String
+  source        EntitlementSource
+  expiresAt     DateTime?
+  createdAt     DateTime          @default(now())
+  entitlement   Entitlement       @relation(fields: [entitlementId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entitlementId])
+}
+
+model FeatureFlag {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  enabled     Boolean @default(false)
+  description String?
+}
+
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  ADVANCED
+}
+
+enum CleansingCategory {
+  PROTECTION
+  MONEY
+  LOVE
+  HOME
+  BUSINESS
+  ENVY
+  RETREAT
+  ROAD_OPENER
+  EMOTIONAL
+  GENERAL
+}
+
+enum EssenceBalanceType {
+  VITAL
+  ETERNAL
+  MIXED
+}
+
+enum EssenceTransactionType {
+  GRANT_FREE
+  PURCHASE
+  SUBSCRIPTION_GRANT
+  SPEND
+  REFUND
+  VISITOR_MERGE
+  ADMIN_ADJUSTMENT
+}
+
+enum MysticModule {
+  TAROT
+  FORTUNE_COOKIE
+  CLEANSING_RECIPE
+  CRYSTAL_BALL
+}
+
+enum ReadingTopic {
+  LOVE
+  MONEY
+  WORK
+  HEALTH
+  SPIRITUALITY
+  GENERAL
+}
+
+enum ReadingPosition {
+  PAST
+  PRESENT
+  ADVICE
+}
+
+enum ProductType {
+  DECK
+  ENVIRONMENT
+  OBJECT
+  PREMIUM_READING
+  SUBSCRIPTION
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  FREE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+enum EntitlementSource {
+  FREE
+  PURCHASE
+  SUBSCRIPTION
+  ADMIN
+}
