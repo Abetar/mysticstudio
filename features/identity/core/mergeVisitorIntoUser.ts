@@ -68,8 +68,10 @@ export async function mergeVisitorIntoUser(input: {
       };
     }
 
-    const nextVitalBalance =
-      existingUserWallet.vitalBalance + visitorSession.wallet.vitalBalance;
+    const nextVitalBalance = Math.max(
+      existingUserWallet.vitalBalance,
+      visitorSession.wallet.vitalBalance,
+    );
 
     const nextEternalBalance =
       existingUserWallet.eternalBalance + visitorSession.wallet.eternalBalance;
@@ -86,9 +88,9 @@ export async function mergeVisitorIntoUser(input: {
         balance: nextBalance,
         transactions: {
           create: {
-            amount: visitorSession.wallet.balance,
+            amount: visitorSession.wallet.eternalBalance,
             type: "VISITOR_MERGE",
-            balanceType: "MIXED",
+            balanceType: "ETERNAL",
             reason: "Merged anonymous visitor wallet into user wallet",
             referenceId: visitorSession.wallet.id,
           },
