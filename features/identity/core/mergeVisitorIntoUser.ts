@@ -68,9 +68,14 @@ export async function mergeVisitorIntoUser(input: {
       };
     }
 
-    const nextVitalBalance = Math.max(
-      existingUserWallet.vitalBalance,
-      visitorSession.wallet.vitalBalance,
+    const DAILY_VITAL_ESSENCE_MAX = 15;
+
+    const nextVitalBalance = Math.min(
+      DAILY_VITAL_ESSENCE_MAX,
+      Math.max(
+        existingUserWallet.vitalBalance,
+        visitorSession.wallet.vitalBalance,
+      ),
     );
 
     const nextEternalBalance =
