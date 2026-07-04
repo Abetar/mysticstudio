@@ -48,7 +48,7 @@ export default function MysticRoom() {
           </motion.div>
 
           <MysticTable />
-          <ReadingDraftBadge />
+          {/* <ReadingDraftBadge /> */}
         </div>
       </section>
     </main>
