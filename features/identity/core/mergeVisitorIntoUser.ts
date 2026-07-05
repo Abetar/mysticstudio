@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma/prisma";
 
+const DAILY_VITAL_ESSENCE_MAX = 15;
+
 export async function mergeVisitorIntoUser(input: {
   anonymousId: string;
   userId: string;
@@ -50,6 +52,15 @@ export async function mergeVisitorIntoUser(input: {
         },
         data: {
           userId: input.userId,
+          vitalBalance: Math.min(
+            visitorSession.wallet.vitalBalance,
+            DAILY_VITAL_ESSENCE_MAX,
+          ),
+          balance:
+            Math.min(
+              visitorSession.wallet.vitalBalance,
+              DAILY_VITAL_ESSENCE_MAX,
+            ) + visitorSession.wallet.eternalBalance,
         },
       });
 
@@ -68,14 +79,9 @@ export async function mergeVisitorIntoUser(input: {
       };
     }
 
-    const DAILY_VITAL_ESSENCE_MAX = 15;
-
     const nextVitalBalance = Math.min(
+      existingUserWallet.vitalBalance,
       DAILY_VITAL_ESSENCE_MAX,
-      Math.max(
-        existingUserWallet.vitalBalance,
-        visitorSession.wallet.vitalBalance,
-      ),
     );
 
     const nextEternalBalance =
@@ -92,13 +98,16 @@ export async function mergeVisitorIntoUser(input: {
         eternalBalance: nextEternalBalance,
         balance: nextBalance,
         transactions: {
-          create: {
-            amount: visitorSession.wallet.eternalBalance,
-            type: "VISITOR_MERGE",
-            balanceType: "ETERNAL",
-            reason: "Merged anonymous visitor wallet into user wallet",
-            referenceId: visitorSession.wallet.id,
-          },
+          create:
+            visitorSession.wallet.eternalBalance > 0
+              ? {
+                  amount: visitorSession.wallet.eternalBalance,
+                  type: "VISITOR_MERGE",
+                  balanceType: "ETERNAL",
+                  reason: "Merged anonymous visitor eternal essences into user wallet",
+                  referenceId: visitorSession.wallet.id,
+                }
+              : undefined,
         },
       },
     });
