@@ -9,10 +9,12 @@ type CreateEssencePackageCheckoutInput = {
 export async function createEssencePackageCheckoutSession(
   input: CreateEssencePackageCheckoutInput,
 ) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.APP_URL;
+
+  console.log("[Stripe Checkout] APP_URL:", appUrl);
 
   if (!appUrl) {
-    throw new Error("Missing NEXT_PUBLIC_APP_URL environment variable.");
+    throw new Error("Missing APP_URL environment variable.");
   }
 
   return stripe.checkout.sessions.create({

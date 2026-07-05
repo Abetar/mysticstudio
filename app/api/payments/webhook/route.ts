@@ -58,17 +58,17 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       },
     });
 
-    const nextEternalBalance =
-      wallet.eternalBalance + essencePackage.essences;
-    const nextBalance = wallet.vitalBalance + nextEternalBalance;
-
     await tx.essenceWallet.update({
       where: {
         id: wallet.id,
       },
       data: {
-        eternalBalance: nextEternalBalance,
-        balance: nextBalance,
+        eternalBalance: {
+          increment: essencePackage.essences,
+        },
+        balance: {
+          increment: essencePackage.essences,
+        },
         transactions: {
           create: {
             amount: essencePackage.essences,
