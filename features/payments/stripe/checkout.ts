@@ -11,7 +11,7 @@ export async function createEssencePackageCheckoutSession(
 ) {
   const appUrl = process.env.APP_URL;
 
-  console.log("[Stripe Checkout] APP_URL:", appUrl);
+  // console.log("[Stripe Checkout] APP_URL:", appUrl);
 
   if (!appUrl) {
     throw new Error("Missing APP_URL environment variable.");
