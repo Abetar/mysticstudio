@@ -1,7 +1,33 @@
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { getOrCreateVisitorWallet } from "@/features/essence/core/essenceService";
 import { prisma } from "@/lib/prisma/prisma";
+
+async function getWalletIdForPurchases(anonymousId: string) {
+  const session = await getServerSession();
+
+  if (session?.user?.email) {
+    const userWallet = await prisma.essenceWallet.findFirst({
+      where: {
+        user: {
+          email: session.user.email,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (userWallet) {
+      return userWallet.id;
+    }
+  }
+
+  const visitorWallet = await getOrCreateVisitorWallet(anonymousId);
+
+  return visitorWallet.id;
+}
 
 export async function GET(request: Request) {
   try {
@@ -16,11 +42,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const wallet = await getOrCreateVisitorWallet(anonymousId);
+    const walletId = await getWalletIdForPurchases(anonymousId);
 
     const purchases = await prisma.essencePurchase.findMany({
       where: {
-        walletId: wallet.id,
+        walletId,
       },
       orderBy: {
         createdAt: "desc",
