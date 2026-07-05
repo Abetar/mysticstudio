@@ -194,6 +194,83 @@ export async function spendEssences(input: {
   });
 }
 
+export async function spendEssencesFromWalletId(input: {
+  walletId: string;
+  amount: number;
+  module: MysticModule;
+  reason?: string;
+  referenceId?: string;
+}) {
+  if (input.amount <= 0) {
+    throw new Error("Essence amount must be greater than zero.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const now = new Date();
+
+    const wallet = await tx.essenceWallet.findUnique({
+      where: { id: input.walletId },
+    });
+
+    if (!wallet) {
+      throw new Error("Wallet not found.");
+    }
+
+    let vitalBalance = wallet.vitalBalance;
+    const eternalBalance = wallet.eternalBalance;
+
+    const shouldRefillVitalEssences =
+      !wallet.lastVitalRefillAt || !isSameUtcDay(wallet.lastVitalRefillAt, now);
+
+    if (shouldRefillVitalEssences) {
+      vitalBalance = DAILY_VITAL_ESSENCE_MAX;
+    }
+
+    const totalBalance = vitalBalance + eternalBalance;
+
+    if (totalBalance < input.amount) {
+      throw new Error("Not enough essences.");
+    }
+
+    const vitalSpent = Math.min(vitalBalance, input.amount);
+    const eternalSpent = input.amount - vitalSpent;
+
+    const nextVitalBalance = vitalBalance - vitalSpent;
+    const nextEternalBalance = eternalBalance - eternalSpent;
+    const nextBalance = nextVitalBalance + nextEternalBalance;
+
+    const balanceType =
+      vitalSpent > 0 && eternalSpent > 0
+        ? "MIXED"
+        : vitalSpent > 0
+          ? "VITAL"
+          : "ETERNAL";
+
+    return tx.essenceWallet.update({
+      where: { id: wallet.id },
+      data: {
+        vitalBalance: nextVitalBalance,
+        eternalBalance: nextEternalBalance,
+        balance: nextBalance,
+        lastVitalRefillAt: shouldRefillVitalEssences
+          ? now
+          : wallet.lastVitalRefillAt,
+        transactions: {
+          create: {
+            amount: -input.amount,
+            type: "SPEND",
+            balanceType,
+            module: input.module,
+            reason: input.reason,
+            referenceId: input.referenceId,
+          },
+        },
+      },
+    });
+  });
+}
+
+
 export async function grantEternalEssences(input: {
   anonymousId: string;
   amount: number;
@@ -390,6 +467,109 @@ export async function unlockCleansingRecipe(input: {
       data: {
         eternalBalance: nextEternalBalance,
         balance: nextBalance,
+        transactions: {
+          create: {
+            amount: -recipe.essenceCost,
+            type: "SPEND",
+            balanceType: "ETERNAL",
+            module: "CLEANSING_RECIPE",
+            reason: `Unlock cleansing recipe: ${recipe.title}`,
+            referenceId: recipe.id,
+          },
+        },
+      },
+    });
+
+    const unlock = await tx.cleansingRecipeUnlock.create({
+      data: {
+        walletId: wallet.id,
+        recipeId: recipe.id,
+      },
+    });
+
+    return {
+      wallet: updatedWallet,
+      unlock,
+      recipe,
+      alreadyUnlocked: false,
+    };
+  });
+}
+
+export async function unlockCleansingRecipeForWalletId(input: {
+  walletId: string;
+  recipeId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const wallet = await tx.essenceWallet.findUnique({
+      where: { id: input.walletId },
+    });
+
+    if (!wallet) {
+      throw new Error("Wallet not found.");
+    }
+
+    const recipe = await tx.cleansingRecipe.findUnique({
+      where: { id: input.recipeId },
+      select: {
+        id: true,
+        title: true,
+        isPremium: true,
+        essenceCost: true,
+      },
+    });
+
+    if (!recipe) {
+      throw new Error("Cleansing recipe not found.");
+    }
+
+    const existingUnlock = await tx.cleansingRecipeUnlock.findUnique({
+      where: {
+        walletId_recipeId: {
+          walletId: wallet.id,
+          recipeId: recipe.id,
+        },
+      },
+    });
+
+    if (existingUnlock) {
+      return {
+        wallet,
+        unlock: existingUnlock,
+        recipe,
+        alreadyUnlocked: true,
+      };
+    }
+
+    if (!recipe.isPremium || recipe.essenceCost <= 0) {
+      const unlock = await tx.cleansingRecipeUnlock.create({
+        data: {
+          walletId: wallet.id,
+          recipeId: recipe.id,
+        },
+      });
+
+      return {
+        wallet,
+        unlock,
+        recipe,
+        alreadyUnlocked: false,
+      };
+    }
+
+    if (wallet.eternalBalance < recipe.essenceCost) {
+      throw new Error("Not enough eternal essences.");
+    }
+
+    const updatedWallet = await tx.essenceWallet.update({
+      where: { id: wallet.id },
+      data: {
+        eternalBalance: {
+          decrement: recipe.essenceCost,
+        },
+        balance: {
+          decrement: recipe.essenceCost,
+        },
         transactions: {
           create: {
             amount: -recipe.essenceCost,

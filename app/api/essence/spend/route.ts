@@ -1,6 +1,11 @@
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import type { MysticModule } from "@/app/generated/prisma/client";
-import { spendEssences } from "@/features/essence/core/essenceService";
+import {
+  spendEssences,
+  spendEssencesFromWalletId,
+} from "@/features/essence/core/essenceService";
+import { prisma } from "@/lib/prisma/prisma";
 
 export async function POST(request: Request) {
   try {
@@ -33,6 +38,43 @@ export async function POST(request: Request) {
       );
     }
 
+    const session = await getServerSession();
+
+    if (session?.user?.email) {
+      const userWallet = await prisma.essenceWallet.findFirst({
+        where: {
+          user: {
+            email: session.user.email,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (userWallet) {
+        const wallet = await spendEssencesFromWalletId({
+          walletId: userWallet.id,
+          amount: body.amount,
+          module: body.module,
+          reason: body.reason,
+          referenceId: body.referenceId,
+        });
+
+        return NextResponse.json({
+          wallet: {
+            id: wallet.id,
+            balance: wallet.balance,
+            vitalBalance: wallet.vitalBalance,
+            eternalBalance: wallet.eternalBalance,
+            lastVitalRefillAt: wallet.lastVitalRefillAt
+              ? wallet.lastVitalRefillAt.toISOString()
+              : null,
+          },
+        });
+      }
+    }
+
     const wallet = await spendEssences({
       anonymousId: body.anonymousId,
       amount: body.amount,
@@ -61,10 +103,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: message },
       {
-        status:
-          message === "Not enough essences."
-            ? 400
-            : 500,
+        status: message === "Not enough essences." ? 400 : 500,
       },
     );
   }

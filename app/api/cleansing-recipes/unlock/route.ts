@@ -1,5 +1,11 @@
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { unlockCleansingRecipe } from "@/features/essence/core/essenceService";
+
+import {
+  unlockCleansingRecipe,
+  unlockCleansingRecipeForWalletId,
+} from "@/features/essence/core/essenceService";
+import { prisma } from "@/lib/prisma/prisma";
 
 type UnlockRequest = {
   anonymousId: string;
@@ -24,6 +30,38 @@ export async function POST(request: Request) {
       );
     }
 
+    const session = await getServerSession();
+
+    if (session?.user?.email) {
+      const userWallet = await prisma.essenceWallet.findFirst({
+        where: {
+          user: {
+            email: session.user.email,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (userWallet) {
+        const result = await unlockCleansingRecipeForWalletId({
+          walletId: userWallet.id,
+          recipeId: body.recipeId,
+        });
+
+        return NextResponse.json({
+          success: true,
+          alreadyUnlocked: result.alreadyUnlocked,
+          wallet: {
+            vitalBalance: result.wallet.vitalBalance,
+            eternalBalance: result.wallet.eternalBalance,
+            balance: result.wallet.balance,
+          },
+        });
+      }
+    }
+
     const result = await unlockCleansingRecipe({
       anonymousId: body.anonymousId,
       recipeId: body.recipeId,
@@ -45,14 +83,7 @@ export async function POST(request: Request) {
       error instanceof Error &&
       error.message === "Not enough eternal essences."
     ) {
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 402,
-        },
-      );
+      return NextResponse.json({ error: error.message }, { status: 402 });
     }
 
     return NextResponse.json(
@@ -62,9 +93,7 @@ export async function POST(request: Request) {
             ? error.message
             : "Failed to unlock cleansing recipe.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
