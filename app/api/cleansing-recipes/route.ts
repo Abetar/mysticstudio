@@ -1,7 +1,52 @@
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import type { CleansingCategory } from "@/app/generated/prisma/enums";
 import { getUnlockedCleansingRecipeIds } from "@/features/essence/core/essenceService";
 import { prisma } from "@/lib/prisma/prisma";
+
+async function getUnlockedRecipeIds(anonymousId: string | null) {
+  const session = await getServerSession();
+
+  console.log("[cleansing-recipes] session email:", session?.user?.email);
+
+  if (session?.user?.email) {
+    const userWallet = await prisma.essenceWallet.findFirst({
+      where: {
+        user: {
+          email: session.user.email,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    console.log("[cleansing-recipes] userWallet:", userWallet);
+
+    if (userWallet) {
+      const unlocks = await prisma.cleansingRecipeUnlock.findMany({
+        where: {
+          walletId: userWallet.id,
+        },
+        select: {
+          recipeId: true,
+        },
+      });
+
+      console.log("[cleansing-recipes] unlocks:", unlocks);
+
+      return unlocks.map((unlock) => unlock.recipeId);
+    }
+  }
+
+  if (!anonymousId) return [];
+
+  const visitorUnlocks = await getUnlockedCleansingRecipeIds(anonymousId);
+
+  console.log("[cleansing-recipes] visitor unlocks:", visitorUnlocks);
+
+  return visitorUnlocks;
+}
 
 export async function GET(request: Request) {
   try {
@@ -42,9 +87,12 @@ export async function GET(request: Request) {
       },
     });
 
-    const unlockedRecipeIds = anonymousId
-      ? await getUnlockedCleansingRecipeIds(anonymousId)
-      : [];
+    const unlockedRecipeIds = await getUnlockedRecipeIds(anonymousId);
+
+    console.log(
+      "[cleansing-recipes] unlockedRecipeIds:",
+      unlockedRecipeIds,
+    );
 
     const unlockedRecipeIdSet = new Set(unlockedRecipeIds);
 
@@ -53,13 +101,19 @@ export async function GET(request: Request) {
       isUnlocked: !recipe.isPremium || unlockedRecipeIdSet.has(recipe.id),
     }));
 
-    return NextResponse.json({ recipes: recipesWithAccess });
+    return NextResponse.json({
+      recipes: recipesWithAccess,
+    });
   } catch (error) {
     console.error("Failed to load cleansing recipes:", error);
 
     return NextResponse.json(
-      { error: "Failed to load cleansing recipes." },
-      { status: 500 },
+      {
+        error: "Failed to load cleansing recipes.",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }
