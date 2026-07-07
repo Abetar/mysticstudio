@@ -598,3 +598,245 @@ export async function unlockCleansingRecipeForWalletId(input: {
     };
   });
 }
+
+export async function unlockGrimoireRitual(input: {
+  anonymousId: string;
+  ritualId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const now = new Date();
+
+    const visitor = await tx.visitorSession.upsert({
+      where: {
+        anonymousId: input.anonymousId,
+      },
+      update: {
+        lastSeenAt: now,
+      },
+      create: {
+        anonymousId: input.anonymousId,
+      },
+      include: {
+        wallet: true,
+      },
+    });
+
+    const wallet =
+      visitor.wallet ??
+      (await tx.essenceWallet.create({
+        data: {
+          visitorSession: {
+            connect: {
+              id: visitor.id,
+            },
+          },
+          balance: DAILY_VITAL_ESSENCE_MAX,
+          vitalBalance: DAILY_VITAL_ESSENCE_MAX,
+          eternalBalance: 0,
+          lastVitalRefillAt: now,
+          transactions: {
+            create: {
+              amount: DAILY_VITAL_ESSENCE_MAX,
+              type: "GRANT_FREE",
+              balanceType: "VITAL",
+              reason: "Daily starter vital essences",
+            },
+          },
+        },
+      }));
+
+    const ritual = await tx.grimoireRitual.findUnique({
+      where: {
+        id: input.ritualId,
+      },
+      select: {
+        id: true,
+        title: true,
+        accessLevel: true,
+        essenceCost: true,
+      },
+    });
+
+    if (!ritual) {
+      throw new Error("Grimoire ritual not found.");
+    }
+
+    const existingUnlock = await tx.grimoireRitualUnlock.findUnique({
+      where: {
+        walletId_ritualId: {
+          walletId: wallet.id,
+          ritualId: ritual.id,
+        },
+      },
+    });
+
+    if (existingUnlock) {
+      return {
+        wallet,
+        unlock: existingUnlock,
+        ritual,
+        alreadyUnlocked: true,
+      };
+    }
+
+    if (ritual.accessLevel === "PUBLIC" || ritual.essenceCost <= 0) {
+      const unlock = await tx.grimoireRitualUnlock.create({
+        data: {
+          walletId: wallet.id,
+          ritualId: ritual.id,
+        },
+      });
+
+      return {
+        wallet,
+        unlock,
+        ritual,
+        alreadyUnlocked: false,
+      };
+    }
+
+    if (wallet.eternalBalance < ritual.essenceCost) {
+      throw new Error("Not enough eternal essences.");
+    }
+
+    const nextEternalBalance = wallet.eternalBalance - ritual.essenceCost;
+    const nextBalance = wallet.vitalBalance + nextEternalBalance;
+
+    const updatedWallet = await tx.essenceWallet.update({
+      where: {
+        id: wallet.id,
+      },
+      data: {
+        eternalBalance: nextEternalBalance,
+        balance: nextBalance,
+        transactions: {
+          create: {
+            amount: -ritual.essenceCost,
+            type: "SPEND",
+            balanceType: "ETERNAL",
+            module: "GRIMOIRE_RITUAL",
+            reason: `Unlock grimoire ritual: ${ritual.title}`,
+            referenceId: ritual.id,
+          },
+        },
+      },
+    });
+
+    const unlock = await tx.grimoireRitualUnlock.create({
+      data: {
+        walletId: wallet.id,
+        ritualId: ritual.id,
+      },
+    });
+
+    return {
+      wallet: updatedWallet,
+      unlock,
+      ritual,
+      alreadyUnlocked: false,
+    };
+  });
+}
+
+export async function unlockGrimoireRitualForWalletId(input: {
+  walletId: string;
+  ritualId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const wallet = await tx.essenceWallet.findUnique({
+      where: { id: input.walletId },
+    });
+
+    if (!wallet) {
+      throw new Error("Wallet not found.");
+    }
+
+    const ritual = await tx.grimoireRitual.findUnique({
+      where: { id: input.ritualId },
+      select: {
+        id: true,
+        title: true,
+        accessLevel: true,
+        essenceCost: true,
+      },
+    });
+
+    if (!ritual) {
+      throw new Error("Grimoire ritual not found.");
+    }
+
+    const existingUnlock = await tx.grimoireRitualUnlock.findUnique({
+      where: {
+        walletId_ritualId: {
+          walletId: wallet.id,
+          ritualId: ritual.id,
+        },
+      },
+    });
+
+    if (existingUnlock) {
+      return {
+        wallet,
+        unlock: existingUnlock,
+        ritual,
+        alreadyUnlocked: true,
+      };
+    }
+
+    if (ritual.accessLevel === "PUBLIC" || ritual.essenceCost <= 0) {
+      const unlock = await tx.grimoireRitualUnlock.create({
+        data: {
+          walletId: wallet.id,
+          ritualId: ritual.id,
+        },
+      });
+
+      return {
+        wallet,
+        unlock,
+        ritual,
+        alreadyUnlocked: false,
+      };
+    }
+
+    if (wallet.eternalBalance < ritual.essenceCost) {
+      throw new Error("Not enough eternal essences.");
+    }
+
+    const updatedWallet = await tx.essenceWallet.update({
+      where: { id: wallet.id },
+      data: {
+        eternalBalance: {
+          decrement: ritual.essenceCost,
+        },
+        balance: {
+          decrement: ritual.essenceCost,
+        },
+        transactions: {
+          create: {
+            amount: -ritual.essenceCost,
+            type: "SPEND",
+            balanceType: "ETERNAL",
+            module: "GRIMOIRE_RITUAL",
+            reason: `Unlock grimoire ritual: ${ritual.title}`,
+            referenceId: ritual.id,
+          },
+        },
+      },
+    });
+
+    const unlock = await tx.grimoireRitualUnlock.create({
+      data: {
+        walletId: wallet.id,
+        ritualId: ritual.id,
+      },
+    });
+
+    return {
+      wallet: updatedWallet,
+      unlock,
+      ritual,
+      alreadyUnlocked: false,
+    };
+  });
+}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
 import { useEssence } from "../components/EssenceProvider";
@@ -18,8 +19,13 @@ export default function EssenceShopModal({
   const { packages, isLoading, error } = useEssencePackages();
   const { anonymousId } = useEssence();
 
+  const [hasMounted, setHasMounted] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   async function handleBuyPackage(packageSlug: string) {
     try {
@@ -62,12 +68,14 @@ export default function EssenceShopModal({
     }
   }
 
-  return (
+  if (!hasMounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen ? (
         <>
           <motion.div
-            className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-md"
+            className="fixed inset-0 z-[9998] bg-black/75 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -79,7 +87,7 @@ export default function EssenceShopModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 18 }}
             transition={{ duration: 0.28 }}
-            className="fixed left-1/2 top-1/2 z-[210] w-[94vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] border border-[#caa46a]/20 bg-[#09060c] shadow-[0_40px_120px_rgba(0,0,0,.75)]"
+            className="fixed left-1/2 top-1/2 z-[9999] w-[94vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] border border-[#caa46a]/20 bg-[#09060c] shadow-[0_40px_120px_rgba(0,0,0,.75)]"
           >
             <div className="relative max-h-[90vh] overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(202,164,106,.14),transparent_55%)]" />
@@ -184,6 +192,7 @@ export default function EssenceShopModal({
           </motion.div>
         </>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

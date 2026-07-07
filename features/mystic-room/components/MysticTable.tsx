@@ -1,6 +1,7 @@
 "use client";
 
 import FortuneCookieExperience from "@/features/fortune-cookie/components/FortuneCookieExperience";
+import GrimoireExperience from "@/features/grimoire/components/GrimoireExperience";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -25,7 +26,8 @@ type TableMode =
   | "shuffling"
   | "selecting"
   | "fortune"
-  | "cleansing";
+  | "cleansing"
+  | "grimoire";
 
 type ReadingDraft = {
   name?: string;
@@ -103,7 +105,10 @@ export default function MysticTable() {
 
   const isFortuneMode = mode === "fortune";
   const isCleansingMode = mode === "cleansing";
-  const isObjectTrayHidden = isTarotMode || isFortuneMode || isCleansingMode;
+  const isGrimoireMode = mode === "grimoire";
+  const isObjectTrayHidden =
+    isTarotMode || isFortuneMode || isCleansingMode || isGrimoireMode;
+
   const error = tarotError;
 
   function handleShuffle() {
@@ -214,7 +219,7 @@ export default function MysticTable() {
           ) : null}
         </AnimatePresence>
 
-        {!isFortuneMode && !isCleansingMode ? (
+        {!isFortuneMode && !isCleansingMode && !isGrimoireMode ? (
           <motion.button
             type="button"
             onClick={() => {
@@ -270,6 +275,7 @@ export default function MysticTable() {
               transition={{ duration: 0.45 }}
             >
               <MysticObjectTray
+                onSelectGrimoire={() => setMode("grimoire")}
                 onSelectFortune={() => setMode("fortune")}
                 onSelectCleansing={() => setMode("cleansing")}
               />
@@ -329,6 +335,10 @@ export default function MysticTable() {
 
           {mode === "cleansing" ? (
             <CleansingBookExperience onBack={resetToTable} />
+          ) : null}
+
+          {mode === "grimoire" ? (
+            <GrimoireExperience onBack={resetToTable} />
           ) : null}
 
           {mode === "shuffling" ? (

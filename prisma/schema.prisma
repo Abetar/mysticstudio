@@ -22,6 +22,8 @@ model User {
   readings        TarotReading[]
   entitlements    UserEntitlement[]
   visitorSessions VisitorSession[]
+
+  grimoireDisclaimerAcceptances GrimoireDisclaimerAcceptance[]
 }
 
 model VisitorSession {
@@ -49,9 +51,10 @@ model EssenceWallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transactions           EssenceTransaction[]
-  cleansingRecipeUnlocks CleansingRecipeUnlock[]
-  essencePurchases       EssencePurchase[]
+  transactions             EssenceTransaction[]
+  cleansingRecipeUnlocks   CleansingRecipeUnlock[]
+  grimoireRitualUnlocks    GrimoireRitualUnlock[]
+  essencePurchases         EssencePurchase[]
 
   user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   visitorSession VisitorSession? @relation(fields: [visitorSessionId], references: [id], onDelete: Cascade)
@@ -162,6 +165,76 @@ model CleansingRecipeUnlock {
   recipe CleansingRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([walletId, recipeId])
+}
+
+model GrimoireRitual {
+  id       String           @id @default(cuid())
+  title    String
+  slug     String           @unique
+  summary  String
+  category GrimoireCategory
+
+  accessLevel GrimoireAccessLevel @default(PUBLIC)
+  difficulty  RecipeDifficulty    @default(EASY)
+
+  estimatedMinutes Int?
+  origin           String?
+  intention        String?
+  expectedResult   String?
+  repeatEvery      String?
+  tags             String[]        @default([])
+
+  ingredients String[] @default([])
+  steps       String[] @default([])
+  warnings    String?
+  notes       String?
+
+  essenceCost Int @default(0)
+
+  requiresDisclaimer Boolean @default(false)
+  disclaimerVersion  String?
+
+  isPublished Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  unlocks GrimoireRitualUnlock[]
+
+  @@index([category])
+  @@index([accessLevel])
+  @@index([isPublished])
+}
+
+model GrimoireRitualUnlock {
+  id        String   @id @default(cuid())
+  walletId  String
+  ritualId  String
+  createdAt DateTime @default(now())
+
+  wallet EssenceWallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  ritual GrimoireRitual @relation(fields: [ritualId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId, ritualId])
+  @@index([walletId])
+  @@index([ritualId])
+}
+
+model GrimoireDisclaimerAcceptance {
+  id        String   @id @default(cuid())
+  userId    String
+  version   String
+  scope     GrimoireDisclaimerScope
+  acceptedAt DateTime @default(now())
+
+  userAgent String?
+  ipHash    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, version, scope])
+  @@index([userId])
 }
 
 model TarotCard {
@@ -327,6 +400,37 @@ enum CleansingCategory {
   GENERAL
 }
 
+enum GrimoireCategory {
+  PROTECTION
+  MONEY
+  LOVE
+  HOME
+  BUSINESS
+  ROAD_OPENER
+  CLEANSING
+  HEALING
+  DREAMS
+  JUSTICE
+  SEPARATION
+  SWEETENING
+  BINDING
+  DOMINATION
+  OCCULT_TRADITION
+  RESERVED
+  GENERAL
+}
+
+enum GrimoireAccessLevel {
+  PUBLIC
+  PREMIUM
+  RESERVED
+}
+
+enum GrimoireDisclaimerScope {
+  RESERVED_GRIMOIRE
+  CONTROVERSIAL_RITUALS
+}
+
 enum EssenceBalanceType {
   VITAL
   ETERNAL
@@ -347,6 +451,7 @@ enum MysticModule {
   TAROT
   FORTUNE_COOKIE
   CLEANSING_RECIPE
+  GRIMOIRE_RITUAL
   CRYSTAL_BALL
 }
 

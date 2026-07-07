@@ -1,6 +1,5 @@
-import ImmersiveIntro from "@/components/experience/ImmersiveIntro";
+import MysticLandingPage from "@/components/experience/MysticLandingPage";
 
 export default function HomePage() {
-  return <ImmersiveIntro />;
+  return <MysticLandingPage />;
 }
-

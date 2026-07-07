@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 type MysticObjectTrayProps = {
+  onSelectGrimoire: () => void;
   onSelectFortune: () => void;
   onSelectCleansing: () => void;
 };
@@ -15,7 +16,7 @@ const objects = [
     src: "/images/objects/grimoire-01.png",
     className:
       "left-[5%] top-[32%] w-[110px] rotate-[-10deg] sm:left-[7%] sm:top-[34%] sm:w-[230px] sm:rotate-[-9deg]",
-    disabled: true,
+    disabled: false,
   },
   {
     key: "fortune-cookie",
@@ -36,6 +37,7 @@ const objects = [
 ];
 
 export default function MysticObjectTray({
+  onSelectGrimoire,
   onSelectFortune,
   onSelectCleansing,
 }: MysticObjectTrayProps) {
@@ -43,11 +45,13 @@ export default function MysticObjectTray({
     <>
       {objects.map((object, index) => {
         const handleClick =
-          object.key === "fortune-cookie"
-            ? onSelectFortune
-            : object.key === "bowl"
-              ? onSelectCleansing
-              : undefined;
+          object.key === "grimoire"
+            ? onSelectGrimoire
+            : object.key === "fortune-cookie"
+              ? onSelectFortune
+              : object.key === "bowl"
+                ? onSelectCleansing
+                : undefined;
 
         return (
           <motion.button
