@@ -19,6 +19,7 @@ import { tarotReadingEngine } from "@/features/tarot/core/tarotReadingEngine";
 import { useGenerateTarotReading } from "@/features/tarot/hooks/useGenerateTarotReading";
 import CleansingBookExperience from "@/features/cleansing/components/CleansingBookExperience";
 import MysticObjectTray from "./MysticObjectTray";
+import { useRouter } from "next/navigation";
 
 type TableMode =
   | "idle"
@@ -43,6 +44,15 @@ const positionLabels = {
   ADVICE: "consejo",
 } as const;
 
+function hasValidReadingDraft(readingDraft: ReadingDraft | null) {
+  return Boolean(
+    readingDraft?.name?.trim() &&
+    readingDraft?.birthDate?.trim() &&
+    readingDraft?.zodiacSign?.trim() &&
+    readingDraft?.topic?.trim(),
+  );
+}
+
 export default function MysticTable() {
   const [mode, setMode] = useState<TableMode>("idle");
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
@@ -50,8 +60,12 @@ export default function MysticTable() {
   const [focusedCardIndex, setFocusedCardIndex] = useState<number | null>(null);
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
   const [isEssenceEmptyModalOpen, setIsEssenceEmptyModalOpen] = useState(false);
+  const [isReadingInfoRequiredModalOpen, setIsReadingInfoRequiredModalOpen] =
+    useState(false);
   const [drawSeed, setDrawSeed] = useState(0);
   const [readingDraft, setReadingDraft] = useState<ReadingDraft | null>(null);
+
+  const router = useRouter();
 
   const {
     balance,
@@ -111,6 +125,8 @@ export default function MysticTable() {
 
   const error = tarotError;
 
+  const hasReadingInfo = hasValidReadingDraft(readingDraft);
+
   function handleShuffle() {
     setSelectedCards([]);
     setActiveCardIndex(null);
@@ -148,7 +164,17 @@ export default function MysticTable() {
     setMode("idle");
   }
 
+  function handleCompleteReadingInfo() {
+    setIsReadingInfoRequiredModalOpen(false);
+    router.push("/reading");
+  }
+
   async function handleRevealReading() {
+    if (!hasReadingInfo) {
+      setIsReadingInfoRequiredModalOpen(true);
+      return;
+    }
+
     if (balance < ESSENCE_COST.TAROT) {
       setIsEssenceEmptyModalOpen(true);
       return;
@@ -458,7 +484,9 @@ export default function MysticTable() {
                       ? "Invocando..."
                       : isGenerating
                         ? "Revelando..."
-                        : "Revelar lectura"}
+                        : hasReadingInfo
+                          ? "Revelar lectura"
+                          : "Completar datos"}
                   </button>
                 ) : null}
               </div>
@@ -488,6 +516,64 @@ export default function MysticTable() {
         currentBalance={balance}
         onClose={() => setIsEssenceEmptyModalOpen(false)}
       />
+
+      <AnimatePresence>
+        {isReadingInfoRequiredModalOpen ? (
+          <motion.div
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              type="button"
+              aria-label="Cerrar aviso de información requerida"
+              onClick={() => setIsReadingInfoRequiredModalOpen(false)}
+              className="absolute inset-0 cursor-default"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 22, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="relative z-10 w-full max-w-lg rounded-[32px] border border-[#caa46a]/25 bg-[#0b0608]/95 p-6 text-center text-[#f5ead2] shadow-[0_30px_120px_rgba(0,0,0,0.75)]"
+            >
+              <p className="text-[10px] uppercase tracking-[0.34em] text-[#caa46a]/70">
+                Lectura incompleta
+              </p>
+
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.05em]">
+                Falta información para leerte las cartas
+              </h2>
+
+              <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-[#d7c7aa]/75">
+                Para revelar una lectura completa necesitamos conocer el
+                contexto de la persona a quien se le está leyendo: nombre,
+                fecha de nacimiento, signo y tema de consulta.
+              </p>
+
+              <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleCompleteReadingInfo}
+                  className="w-full rounded-full border border-[#caa46a]/45 bg-[#caa46a]/15 px-7 py-3 text-xs uppercase tracking-[0.24em] text-[#f8e7c4] transition hover:bg-[#caa46a]/25 sm:w-auto"
+                >
+                  Completar información
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsReadingInfoRequiredModalOpen(false)}
+                  className="w-full rounded-full border border-[#caa46a]/20 bg-black/25 px-7 py-3 text-xs uppercase tracking-[0.24em] text-[#d7c7aa]/65 transition hover:bg-black/40 sm:w-auto"
+                >
+                  Seguir en la mesa
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </>
   );
 }

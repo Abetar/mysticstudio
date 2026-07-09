@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { ScrollText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -48,9 +49,13 @@ export default function ReadingInfoModal() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 left-1/2 z-[80] w-[calc(100vw-2.5rem)] -translate-x-1/2 rounded-full border border-[#caa46a]/30 bg-black/35 px-4 py-3 text-center text-[10px] uppercase tracking-[0.2em] text-[#f7e6c3]/80 shadow-[0_0_40px_rgba(0,0,0,0.45)] backdrop-blur-xl transition hover:border-[#caa46a]/60 hover:bg-[#caa46a]/10 sm:bottom-5 sm:left-5 sm:w-auto sm:translate-x-0 sm:tracking-[0.24em]"
+        aria-label="Ver información de la lectura"
+        title="Ver información de la lectura"
+        className="fixed bottom-24 right-5 z-[80] flex h-14 w-14 items-center justify-center rounded-full border border-[#caa46a]/30 bg-black/35 text-[#f7e6c3]/80 shadow-[0_0_40px_rgba(0,0,0,0.45)] backdrop-blur-xl transition hover:border-[#caa46a]/60 hover:bg-[#caa46a]/10 sm:bottom-5 sm:left-5 sm:right-auto sm:h-auto sm:w-auto sm:px-4 sm:py-3 sm:text-center sm:text-[10px] sm:uppercase sm:tracking-[0.24em]"
       >
-        Información de lectura
+        <ScrollText size={22} className="sm:hidden" />
+
+        <span className="hidden sm:inline">Información de lectura</span>
       </button>
 
       <AnimatePresence>
@@ -96,18 +101,22 @@ export default function ReadingInfoModal() {
                   <span className="text-[#caa46a]/80">Nombre:</span>{" "}
                   {draft?.name || "No definido"}
                 </p>
+
                 <p>
                   <span className="text-[#caa46a]/80">Fecha:</span>{" "}
                   {draft?.birthDate || "No definida"}
                 </p>
+
                 <p>
                   <span className="text-[#caa46a]/80">Signo:</span>{" "}
                   {draft?.zodiacSign || "No definido"}
                 </p>
+
                 <p>
                   <span className="text-[#caa46a]/80">Tema:</span>{" "}
                   {draft?.topic ? topicLabels[draft.topic] : "No definido"}
                 </p>
+
                 <p>
                   <span className="text-[#caa46a]/80">Pregunta:</span>{" "}
                   {draft?.question?.trim() || "Lectura general"}
