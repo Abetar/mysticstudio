@@ -15,6 +15,9 @@ const ANONYMOUS_ID_STORAGE_KEY = "mysticstudio.anonymousId";
 const ANONYMOUS_ID_COOKIE_KEY = "mysticstudio.anonymousId";
 const ANONYMOUS_ID_COOKIE_MAX_AGE_DAYS = 365;
 
+const WALLET_BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const UTC_REFILL_REFRESH_OFFSET_MS = 5 * 1000;
+
 type EssenceWallet = {
   id: string;
   balance: number;
@@ -101,6 +104,25 @@ function getOrCreateAnonymousId() {
   return newId;
 }
 
+function getMillisecondsUntilNextUtcDay() {
+  const now = new Date();
+
+  const nextUtcDay = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0,
+    0,
+    0,
+    0,
+  );
+
+  return Math.max(
+    nextUtcDay - now.getTime() + UTC_REFILL_REFRESH_OFFSET_MS,
+    UTC_REFILL_REFRESH_OFFSET_MS,
+  );
+}
+
 export function EssenceProvider({ children }: { children: ReactNode }) {
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [wallet, setWallet] = useState<EssenceWallet | null>(null);
@@ -109,47 +131,80 @@ export function EssenceProvider({ children }: { children: ReactNode }) {
   const [isGrantingDevEssences, setIsGrantingDevEssences] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshWallet = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const resolvedAnonymousId = getOrCreateAnonymousId();
-      setAnonymousId(resolvedAnonymousId);
-
-      const response = await fetch("/api/essence/visitor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          anonymousId: resolvedAnonymousId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo cargar tu saldo de esencias.");
+  const loadWallet = useCallback(
+    async ({
+      showLoading,
+      clearExistingError,
+    }: {
+      showLoading: boolean;
+      clearExistingError: boolean;
+    }) => {
+      if (showLoading) {
+        setIsLoading(true);
       }
 
-      const data = (await response.json()) as {
-        wallet: EssenceWallet;
-      };
+      if (clearExistingError) {
+        setError(null);
+      }
 
-      setWallet(data.wallet);
+      try {
+        const resolvedAnonymousId = getOrCreateAnonymousId();
 
-      return data.wallet;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Ocurrió un error cargando tus esencias.";
+        setAnonymousId(resolvedAnonymousId);
 
-      setError(message);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        const response = await fetch("/api/essence/visitor", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+          body: JSON.stringify({
+            anonymousId: resolvedAnonymousId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("No se pudo cargar tu saldo de esencias.");
+        }
+
+        const data = (await response.json()) as {
+          wallet: EssenceWallet;
+        };
+
+        setWallet(data.wallet);
+
+        return data.wallet;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error cargando tus esencias.";
+
+        setError(message);
+
+        return null;
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [],
+  );
+
+  const refreshWallet = useCallback(async () => {
+    return loadWallet({
+      showLoading: true,
+      clearExistingError: true,
+    });
+  }, [loadWallet]);
+
+  const refreshWalletSilently = useCallback(async () => {
+    return loadWallet({
+      showLoading: false,
+      clearExistingError: false,
+    });
+  }, [loadWallet]);
 
   const spendEssences = useCallback(
     async (input: SpendEssencesInput) => {
@@ -168,6 +223,7 @@ export function EssenceProvider({ children }: { children: ReactNode }) {
           headers: {
             "Content-Type": "application/json",
           },
+          cache: "no-store",
           body: JSON.stringify({
             anonymousId: resolvedAnonymousId,
             amount: input.amount,
@@ -199,6 +255,7 @@ export function EssenceProvider({ children }: { children: ReactNode }) {
             : "Ocurrió un error gastando tus esencias.";
 
         setError(message);
+
         return null;
       } finally {
         setIsSpending(false);
@@ -224,6 +281,7 @@ export function EssenceProvider({ children }: { children: ReactNode }) {
           headers: {
             "Content-Type": "application/json",
           },
+          cache: "no-store",
           body: JSON.stringify({
             anonymousId: resolvedAnonymousId,
             amount: input.amount,
@@ -253,6 +311,7 @@ export function EssenceProvider({ children }: { children: ReactNode }) {
             : "Ocurrió un error agregando Esencias.";
 
         setError(message);
+
         return null;
       } finally {
         setIsGrantingDevEssences(false);
@@ -264,6 +323,57 @@ export function EssenceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshWallet();
   }, [refreshWallet]);
+
+  useEffect(() => {
+    function handleWindowFocus() {
+      void refreshWalletSilently();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void refreshWalletSilently();
+      }
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshWalletSilently]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshWalletSilently();
+      }
+    }, WALLET_BACKGROUND_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [refreshWalletSilently]);
+
+  useEffect(() => {
+    let refillTimeoutId: number | null = null;
+
+    function scheduleNextUtcRefillRefresh() {
+      refillTimeoutId = window.setTimeout(() => {
+        void refreshWalletSilently();
+        scheduleNextUtcRefillRefresh();
+      }, getMillisecondsUntilNextUtcDay());
+    }
+
+    scheduleNextUtcRefillRefresh();
+
+    return () => {
+      if (refillTimeoutId !== null) {
+        window.clearTimeout(refillTimeoutId);
+      }
+    };
+  }, [refreshWalletSilently]);
 
   const value = useMemo<EssenceContextValue>(
     () => ({
