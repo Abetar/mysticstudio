@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.mystic-interactive,
+.mystic-room button:not(:disabled),
+.mystic-room a,
+.mystic-room [role="button"],
+.mystic-room input[type="button"],
+.mystic-room input[type="submit"],
+.mystic-room select,
+.mystic-room summary {
+  cursor:
+    url("/images/cursors/mystic-cursor-hover-48.png") 8 8,
+    pointer;
+}
+
+.mystic-room button:disabled,
+.mystic-room [aria-disabled="true"] {
+  cursor:
+    url("/images/cursors/mystic-cursor-48.png") 8 8,
+    default;
+}

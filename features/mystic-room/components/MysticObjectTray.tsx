@@ -58,15 +58,24 @@ export default function MysticObjectTray({
             key={object.key}
             type="button"
             onClick={handleClick}
+            disabled={object.disabled}
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            whileHover={{
-              y: -8,
-              scale: 1.03,
-            }}
-            whileTap={{
-              scale: object.disabled ? 1 : 0.97,
-            }}
+            whileHover={
+              object.disabled
+                ? undefined
+                : {
+                    y: -8,
+                    scale: 1.03,
+                  }
+            }
+            whileTap={
+              object.disabled
+                ? undefined
+                : {
+                    scale: 0.97,
+                  }
+            }
             transition={{
               delay: 0.75 + index * 0.12,
               duration: 0.8,
@@ -76,7 +85,7 @@ export default function MysticObjectTray({
             } ${
               object.disabled
                 ? "cursor-default opacity-80"
-                : "cursor-pointer opacity-90"
+                : "mystic-interactive opacity-90"
             }`}
             aria-label={object.label}
           >
@@ -85,7 +94,7 @@ export default function MysticObjectTray({
               alt={object.label}
               fill
               sizes="(max-width: 640px) 110px, 240px"
-              className="object-contain drop-shadow-[0_18px_24px_rgba(0,0,0,0.68)] sm:drop-shadow-[0_24px_32px_rgba(0,0,0,0.65)]"
+              className="pointer-events-none object-contain drop-shadow-[0_18px_24px_rgba(0,0,0,0.68)] sm:drop-shadow-[0_24px_32px_rgba(0,0,0,0.65)]"
             />
 
             <span className="pointer-events-none absolute left-1/2 top-full mt-1.5 -translate-x-1/2 whitespace-nowrap text-[8px] uppercase tracking-[0.24em] text-[#caa46a]/70 sm:mt-2 sm:text-[10px] sm:tracking-[0.3em]">

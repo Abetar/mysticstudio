@@ -4,11 +4,16 @@ import { motion } from "framer-motion";
 import EssenceBalancePill from "@/features/essence/components/EssenceBalancePill";
 import RoomDirector from "../director/RoomDirector";
 import MysticTable from "./MysticTable";
-import ReadingDraftBadge from "./ReadingDraftBadge";
 
 export default function MysticRoom() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050308] text-[#f5ead2]">
+    <main
+      className="mystic-room relative min-h-screen overflow-hidden bg-[#050308] text-[#f5ead2]"
+      style={{
+        cursor:
+          'url("/images/cursors/mystic-cursor-48.png") 8 8, auto',
+      }}
+    >
       <RoomDirector />
       <EssenceBalancePill />
 
@@ -23,8 +28,6 @@ export default function MysticRoom() {
 
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-end px-4 pb-10 pt-16 sm:px-8">
         <div className="w-full max-w-5xl">
-          
-
           <motion.div
             initial={{ opacity: 0, y: 34, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -38,17 +41,9 @@ export default function MysticRoom() {
             <h1 className="text-3xl font-semibold tracking-[-0.04em] sm:text-5xl">
               La mesa te estaba esperando.
             </h1>
-
-            {/*
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[#d7c7aa]/75">
-              Elige una disciplina, formula una pregunta y deja que los símbolos
-              tomen su lugar sobre la madera.
-            </p>
-            */}
           </motion.div>
 
           <MysticTable />
-          {/* <ReadingDraftBadge /> */}
         </div>
       </section>
     </main>
