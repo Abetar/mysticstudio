@@ -3,17 +3,14 @@
 import { motion } from "framer-motion";
 import EssenceBalancePill from "@/features/essence/components/EssenceBalancePill";
 import RoomDirector from "../director/RoomDirector";
+import MysticCursor from "./MysticCursor";
 import MysticTable from "./MysticTable";
 
 export default function MysticRoom() {
   return (
-    <main
-      className="mystic-room relative min-h-screen overflow-hidden bg-[#050308] text-[#f5ead2]"
-      style={{
-        cursor:
-          'url("/images/cursors/mystic-cursor-48.png") 8 8, auto',
-      }}
-    >
+    <main className="mystic-room relative min-h-screen overflow-hidden bg-[#050308] text-[#f5ead2]">
+      <MysticCursor />
+
       <RoomDirector />
       <EssenceBalancePill />
 
